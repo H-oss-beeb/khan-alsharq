@@ -136,6 +136,7 @@
                 menu: 'قائمة الطعام', addToCart: 'إضافة', cart: 'السلة',
                 subtotal: 'المجموع الفرعي', tax: 'الضريبة (15%)', deliveryFee: 'رسوم التوصيل', total: 'الإجمالي',
                 promo: 'كود الخصم', apply: 'تطبيق', checkout: 'تأكيد الطلب',
+                email: 'البريد الإلكتروني',
                 trackTitle: 'تتبع الطلب', orderNum: 'رقم الطلب', eta: 'الوقت المتبقي',
                 status_pending: 'تم الاستلام', status_preparing: 'في المطبخ', status_delivering: 'في الطريق', status_completed: 'تم التسليم',
                 adminDash: 'التحليلات', adminMenu: 'إدارة المنيو', adminOrders: 'الطلبات الحية',
@@ -168,6 +169,7 @@
                 menu: 'Menu', addToCart: 'Add', cart: 'Cart',
                 subtotal: 'Subtotal', tax: 'Tax (15%)', deliveryFee: 'Delivery Fee', total: 'Total',
                 promo: 'Promo Code', apply: 'Apply', checkout: 'Place Order',
+                email: 'Email Address',
                 trackTitle: 'Track Order', orderNum: 'Order Number', eta: 'Time Remaining',
                 status_pending: 'Received', status_preparing: 'In Kitchen', status_delivering: 'On the Way', status_completed: 'Delivered',
                 adminDash: 'Analytics', adminMenu: 'Manage Menu', adminOrders: 'Live Orders',
@@ -348,6 +350,19 @@
                 };
 
                 setOrders([newOrder, ...orders]);
+                        if (customerDetails.email) {
+            fetch('/api/send-email', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    email: customerDetails.email,
+                    orderId: newOrder.id,
+                    total: total,
+                    items: cart
+                })
+            }).catch(err => console.error("Email send failed:", err));
+        }
+
                 setCart([]);
                 setActivePromo(null);
                 setActiveOrderId(newOrder.id);
@@ -732,7 +747,7 @@
         const CustomerCart = () => {
             const { t, isAr, cart, updateQty, orderType, activePromo, applyPromo, placeOrder } = useContext(AppContext);
             const [promoInput, setPromoInput] = useState('');
-            const [details, setDetails] = useState({ name: '', phone: '', address: '', table: '' });
+            const [details, setDetails] = useState({ name: '', phone: '', address: '', email: '', table: '' });
             const [errors, setErrors] = useState({});
 
             const subtotal = cart.reduce((sum, i) => sum + (i.price * i.qty), 0);
@@ -748,6 +763,8 @@
                 } else {
                     if (!details.name.trim()) newErrors.name = true;
                     if (!details.phone.trim()) newErrors.phone = true;
+                    if (!details.email.trim()) newErrors.email = true;
+
                     if (!details.address.trim()) newErrors.address = true;
                 }
 
@@ -815,6 +832,17 @@
                                     <input type="tel" placeholder={t.phone} onChange={e => { setDetails({...details, phone: e.target.value}); setErrors({...errors, phone: false}); }} className={`w-full bg-slate-900 border ${errors.phone ? 'border-red-500' : 'border-slate-700'} rounded-xl px-4 py-3 text-white outline-none focus:border-gold-500`} />
                                     {errors.phone && <span className="text-red-500 text-xs mt-1 block">{isAr ? 'رقم الهاتف مطلوب' : 'Phone number is required'}</span>}
                                 </div>
+                                <div>
+    <input 
+        type="email" 
+        placeholder={t.email} 
+        value={details.email}
+        onChange={e => { setDetails({...details, email: e.target.value}); setErrors({...errors, email: false}); }} 
+        className={`w-full bg-slate-900 border ${errors.email ? 'border-red-500' : 'border-slate-700'} rounded-xl px-4 py-3 text-white outline-none focus:border-gold-500`} 
+    />
+                                    {errors.email && <span className="text-red-500 text-xs mt-1 block">{isAr ? 'البريد الإلكتروني مطلوب' : 'Email is required'}</span>}
+                                </div>
+
                                 <div>
                                     <textarea placeholder={t.address} onChange={e => { setDetails({...details, address: e.target.value}); setErrors({...errors, address: false}); }} className={`w-full bg-slate-900 border ${errors.address ? 'border-red-500' : 'border-slate-700'} rounded-xl px-4 py-3 text-white outline-none focus:border-gold-500 resize-none`}></textarea>
                                     {errors.address && <span className="text-red-500 text-xs mt-1 block">{isAr ? 'العنوان مطلوب' : 'Address is required'}</span>}
