@@ -1,0 +1,1424 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>خان الشرق | Khan Al-Sharq - Enterprise Edition</title>
+
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <!-- React & ReactDOM -->
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+
+    <!-- Babel for JSX -->
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
+    <!-- html2pdf.js for Direct PDF Generation -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Aref+Ruqaa:wght@400;700&family=Cairo:wght@400;600;700;800&display=swap" rel="stylesheet">
+
+    <!-- Tailwind Config -->
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        slate: { 850: '#151f32', 900: '#0F172A', 950: '#020617' },
+                        gold: { 400: '#FBBF24', 500: '#F59E0B', 600: '#D97706' },
+                        terra: { 500: '#EA580C', 600: '#C2410C' }
+                    },
+                    fontFamily: {
+                        serif: ['"Aref Ruqaa"', 'serif'],
+                        sans: ['Cairo', 'sans-serif'],
+                        mono: ['ui-monospace', 'SFMono-Regular', 'Menlo', 'Monaco', 'Consolas', 'monospace']
+                    },
+                    animation: {
+                        'fade-in': 'fadeIn 0.4s ease-out forwards',
+                        'slide-up': 'slideUp 0.5s ease-out forwards',
+                        'pulse-fast': 'pulse 1s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+                    },
+                    keyframes: {
+                        fadeIn: { '0%': { opacity: '0' }, '100%': { opacity: '1' } },
+                        slideUp: { '0%': { opacity: '0', transform: 'translateY(20px)' }, '100%': { opacity: '1', transform: 'translateY(0)' } }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body {
+            background-color: #0F172A;
+            color: #f8fafc;
+            -webkit-tap-highlight-color: transparent;
+            font-family: 'Cairo', sans-serif;
+        }
+        .glass {
+            background: rgba(30, 41, 59, 0.7);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+        }
+        .glass-gold {
+            background: linear-gradient(135deg, rgba(217, 119, 6, 0.1) 0%, rgba(30, 41, 59, 0.8) 100%);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(217, 119, 6, 0.2);
+        }
+        .hide-scrollbar::-webkit-scrollbar { display: none; }
+        .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+        input[type=number]::-webkit-inner-spin-button { opacity: 1; }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useEffect, createContext, useContext, useMemo, useRef } = React;
+
+        // ==========================================
+        // 1. Icons (Inline SVGs)
+        // ==========================================
+        const Icons = {
+            Dallah: () => <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M18 8h1a4 4 0 0 1 0 8h-1"/><path d="M2 8h16v9a4 4 0 0 1-4 4H6a4 4 0 0 1-4-4V8z"/><line x1="6" y1="1" x2="6" y2="4"/><line x1="10" y1="1" x2="10" y2="4"/><line x1="14" y1="1" x2="14" y2="4"/></svg>,
+            Globe: () => <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>,
+            User: () => <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>,
+            Shield: () => <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>,
+            Lock: () => <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>,
+            Star: ({ filled }) => <svg width="16" height="16" viewBox="0 0 24 24" fill={filled ? "#F59E0B" : "none"} stroke={filled ? "#F59E0B" : "currentColor"} strokeWidth="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>,
+            Plus: () => <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>,
+            Minus: () => <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="5" y1="12" x2="19" y2="12"/></svg>,
+            Cart: () => <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg>,
+            Trash: () => <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>,
+            Store: () => <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>,
+            Bike: () => <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="5.5" cy="17.5" r="3.5"/><circle cx="18.5" cy="17.5" r="3.5"/><path d="M15 6a1 1 0 1 0 0-2 1 1 0 0 0 0 2zm-3 11.5V14l-3-3 4-3 2 3h2"/></svg>,
+            Check: () => <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="20 6 9 17 4 12"/></svg>,
+            Chart: () => <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>,
+            List: () => <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>,
+            Activity: () => <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>,
+            Clock: () => <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>,
+            Edit: () => <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>,
+            X: () => <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>,
+            Reset: () => <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M20.49 9A9 9 0 0 0 5.64 5.64L1 10m22 4l-4.64 4.36A9 9 0 0 1 3.51 15"/></svg>,
+            Tag: () => <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M20.59 13.41L13.42 20.6a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/><line x1="7" y1="7" x2="7.01" y2="7"/></svg>,
+            Download: () => <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>,
+            Mail: () => <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+        };
+
+        // ==========================================
+        // 2. Initial Data & Translations
+        // ==========================================
+        const CATEGORIES = [
+            { id: 'starters', labelAr: 'مقبلات', labelEn: 'Starters' },
+            { id: 'mains', labelAr: 'أطباق رئيسية', labelEn: 'Mains' },
+            { id: 'grills', labelAr: 'مشاوي', labelEn: 'Grills' },
+            { id: 'desserts', labelAr: 'حلويات', labelEn: 'Desserts' },
+            { id: 'drinks', labelAr: 'مشروبات', labelEn: 'Drinks' }
+        ];
+
+        const initialMenu = [
+            { id: 1, nameAr: 'مندي لحم ملكي', descAr: 'لحم غنم طازج مطهو ببطء مع أرز مدخن.', price: 25000, discount: 0, cat: 'mains', img: 'https://images.unsplash.com/photo-1633321702518-7feccafb94d5?q=80&w=600&auto=format&fit=crop', ratingSum: 0, reviews: 0, available: true },
+            { id: 2, nameAr: 'حمص بالكمأة', descAr: 'حمص ناعم مع زيت الكمأة الفاخر.', price: 8000, discount: 0, cat: 'starters', img: 'https://images.unsplash.com/photo-1577906096429-f73c2c312435?q=80&w=600&auto=format&fit=crop', ratingSum: 0, reviews: 0, available: true },
+            { id: 3, nameAr: 'مشاوي خان الشرق', descAr: 'تشكيلة فاخرة من الكباب والتكة.', price: 35000, discount: 0, cat: 'grills', img: 'https://images.unsplash.com/photo-1555939594-58d7cb561ad1?q=80&w=600&auto=format&fit=crop', ratingSum: 0, reviews: 0, available: true },
+            { id: 4, nameAr: 'كنافة ذهبية', descAr: 'كنافة نابلسية بالجبن الساخن والفستق.', price: 9000, discount: 0, cat: 'desserts', img: 'https://images.unsplash.com/photo-1605197136125-1c3e03710320?q=80&w=600&auto=format&fit=crop', ratingSum: 0, reviews: 0, available: true },
+            { id: 5, nameAr: 'شاي عراقي مهيل', descAr: 'شاي عراقي أصيل مخدر على الفحم مع الهيل.', price: 2000, discount: 0, cat: 'drinks', img: 'https://images.unsplash.com/photo-1576092768241-dec231879fc3?q=80&w=600&auto=format&fit=crop', ratingSum: 0, reviews: 0, available: true },
+            { id: 6, nameAr: 'عصير رمان طازج', descAr: 'عصير رمان طبيعي 100% بدون سكر مضاف.', price: 4000, discount: 0, cat: 'drinks', img: 'https://images.unsplash.com/photo-1613478223719-2ab802602423?q=80&w=600&auto=format&fit=crop', ratingSum: 0, reviews: 0, available: true }
+        ];
+
+        const translations = {
+            ar: {
+                brand: 'خان الشرق', login: 'دخول', admin: 'الإدارة', customerView: 'واجهة الزبون',
+                dineIn: 'داخل الصالة', delivery: 'توصيل خارجي',
+                tableNum: 'رقم الطاولة', name: 'الاسم', phone: 'رقم الهاتف', address: 'العنوان',
+                menu: 'قائمة الطعام', addToCart: 'إضافة', cart: 'السلة',
+                subtotal: 'المجموع الفرعي', tax: 'الضريبة (15%)', deliveryFee: 'رسوم التوصيل', total: 'الإجمالي',
+                promo: 'كود الخصم', apply: 'تطبيق', checkout: 'تأكيد الطلب',
+                trackTitle: 'تتبع الطلب', orderNum: 'رقم الطلب', eta: 'الوقت المتبقي',
+                status_pending: 'تم الاستلام', status_preparing: 'في المطبخ', status_delivering: 'في الطريق', status_completed: 'تم التسليم',
+                adminDash: 'التحليلات', adminMenu: 'إدارة المنيو', adminOrders: 'الطلبات الحية',
+                dailySales: 'مبيعات اليوم', monthlySales: 'مبيعات الشهر', netProfit: 'صافي الأرباح (35%)', ordersCount: 'إجمالي الطلبات', topDishes: 'الأكثر مبيعاً (حسب الطلبات)',
+                rateDish: 'قيّم الطبق', submitRating: 'إرسال التقييم',
+                all: 'الكل', noDishes: 'لا توجد أطباق في هذه الفئة حالياً', currency: 'د.ع', discountLabel: 'خصم',
+                emptyCart: 'السلة فارغة', orderDetails: 'بيانات الطلب', invalidCode: 'كود غير صالح',
+                noActiveOrder: 'لا يوجد طلب نشط', orderCompleted: 'اكتمل الطلب بنجاح', digitalReceipt: 'الفاتورة الرقمية',
+                cancel: 'إلغاء', save: 'حفظ', addNewDish: 'إضافة طبق جديد', editDish: 'تعديل الطبق',
+                dishNameAr: 'اسم الطبق', desc: 'الوصف', price: 'السعر',
+                discountPct: 'الخصم %', imgUrl: 'رابط الصورة (URL)', availableInMenu: 'متوفر في القائمة',
+                available: 'متوفر', unavailable: 'غير متوفر', resetData: 'إعادة تصفير البيانات (طلبات، مبيعات، تقييمات)',
+                noOrders: 'لا توجد طلبات حالياً', minutesElapsed: 'دقيقة منذ الطلب', table: 'طاولة', deliveryTo: 'توصيل',
+                orderWord: 'طلب', noCompletedOrders: 'لا توجد طلبات مكتملة بعد لعرض الأكثر مبيعاً.',
+                home: 'الرئيسية', track: 'تتبع', heroTitle: 'تذوق عبق التاريخ', heroSubtitle: 'أشهى الأطباق الشرقية المحضرة بشغف وأصالة.',
+                howToOrder: 'كيف تفضل طلبك اليوم؟', browse: 'تصفح', category: 'الفئة',
+                downloadDailyPdf: 'تنزيل التقرير اليومي PDF', downloadMonthlyPdf: 'تنزيل التقرير الشهري PDF',
+                avgRating: 'متوسط التقييمات', dailyReportTitle: 'تقرير المبيعات اليومي', monthlyReportTitle: 'تقرير المبيعات الشهري',
+                emailConfirmationNotice: 'تم إرسال رابط تأكيد استلام الطلب إلى بريدك الإلكتروني. يرجى مراجعة رسائل البريد لتأكيد الاستلام مباشرة.',
+                adminPinTitle: 'التحقق من صلاحية الإدارة',
+                adminPinDesc: 'يرجى إدخال رمز الأمان المكون من 5 أرقام للوصول إلى لوحة التحكم',
+                adminPinPlaceholder: 'أدخل رمز الأمان (PIN)',
+                adminPinSubmit: 'تأكيد الدخول',
+                adminPinError: 'رمز الأمان غير صحيح، يرجى المحاولة مرة أخرى'
+            },
+            en: {
+                brand: 'Khan Al-Sharq', login: 'Login', admin: 'Admin', customerView: 'Customer View',
+                dineIn: 'Dine-In', delivery: 'Delivery',
+                tableNum: 'Table Number', name: 'Name', phone: 'Phone', address: 'Address',
+                menu: 'Menu', addToCart: 'Add', cart: 'Cart',
+                subtotal: 'Subtotal', tax: 'Tax (15%)', deliveryFee: 'Delivery Fee', total: 'Total',
+                promo: 'Promo Code', apply: 'Apply', checkout: 'Place Order',
+                trackTitle: 'Track Order', orderNum: 'Order Number', eta: 'Time Remaining',
+                status_pending: 'Received', status_preparing: 'In Kitchen', status_delivering: 'On the Way', status_completed: 'Delivered',
+                adminDash: 'Analytics', adminMenu: 'Manage Menu', adminOrders: 'Live Orders',
+                dailySales: "Today's Sales", monthlySales: 'Monthly Sales', netProfit: 'Net Profit (35%)', ordersCount: 'Total Orders', topDishes: 'Best Sellers (by orders)',
+                rateDish: 'Rate this Dish', submitRating: 'Submit Rating',
+                all: 'All', noDishes: 'No dishes in this category currently', currency: 'IQD', discountLabel: 'Discount',
+                emptyCart: 'Cart is empty', orderDetails: 'Order Details', invalidCode: 'Invalid Code',
+                noActiveOrder: 'No active order', orderCompleted: 'Order completed successfully', digitalReceipt: 'Digital Receipt',
+                cancel: 'Cancel', save: 'Save', addNewDish: 'Add New Dish', editDish: 'Edit Dish',
+                dishNameAr: 'Dish Name', desc: 'Description', price: 'Price',
+                discountPct: 'Discount %', imgUrl: 'Image URL', availableInMenu: 'Available in Menu',
+                available: 'Available', unavailable: 'Unavailable', resetData: 'Reset all data (orders, sales, ratings)',
+                noOrders: 'No orders currently', minutesElapsed: 'mins elapsed', table: 'Table', deliveryTo: 'Delivery',
+                orderWord: 'order(s)', noCompletedOrders: 'No completed orders yet to show best sellers.',
+                home: 'Home', track: 'Track', heroTitle: 'Taste the History', heroSubtitle: 'The most delicious oriental dishes prepared with passion.',
+                howToOrder: 'How would you like your order today?', browse: 'Browse', category: 'Category',
+                downloadDailyPdf: 'Download Daily PDF Report', downloadMonthlyPdf: 'Download Monthly PDF Report',
+                avgRating: 'Average Rating', dailyReportTitle: 'Daily Sales Report', monthlyReportTitle: 'Monthly Sales Report',
+                emailConfirmationNotice: 'Order receipt confirmation link has been sent to your email. Please check your inbox to confirm.',
+                adminPinTitle: 'Admin Security Verification',
+                adminPinDesc: 'Please enter the 5-digit security PIN to access the Admin Portal',
+                adminPinPlaceholder: 'Enter Security PIN',
+                adminPinSubmit: 'Verify & Enter',
+                adminPinError: 'Incorrect security PIN. Please try again'
+            }
+        };
+
+        const getEffectivePrice = (item) => {
+            if (item.discount && item.discount > 0) {
+                return Math.max(0, Math.round(item.price * (1 - item.discount / 100)));
+            }
+            return item.price;
+        };
+        const getRatingValue = (item) => item.reviews > 0 ? (item.ratingSum / item.reviews) : 0;
+        const getRatingDisplay = (item) => item.reviews > 0 ? getRatingValue(item).toFixed(1) : '0.0';
+
+        // Helper for local date string YYYY-MM-DD
+        const getLocalDateString = (d = new Date()) => {
+            const year = d.getFullYear();
+            const month = String(d.getMonth() + 1).padStart(2, '0');
+            const day = String(d.getDate()).padStart(2, '0');
+            return `${year}-${month}-${day}`;
+        };
+
+        // ==========================================
+        // 3. Global State Context
+        // ==========================================
+        const AppContext = createContext();
+
+        function AppProvider({ children }) {
+            const [lang, setLang] = useState('ar');
+            const [appMode, setAppMode] = useState('customer');
+            const [isAdminAuthenticated, setIsAdminAuthenticated] = useState(false);
+            const [showAdminPinModal, setShowAdminPinModal] = useState(false);
+            const [menuItems, setMenuItems] = useState(initialMenu);
+            const [promos] = useState([{ code: 'KHAN20', discount: 0.20, active: true }]);
+            
+            // Persistent Orders & Counter via LocalStorage
+            const [orders, setOrders] = useState(() => {
+                const saved = localStorage.getItem('khan_orders');
+                return saved ? JSON.parse(saved) : [];
+            });
+
+            const [orderCounter, setOrderCounter] = useState(() => {
+                const saved = localStorage.getItem('khan_order_counter');
+                const savedDate = localStorage.getItem('khan_counter_date');
+                const today = getLocalDateString();
+                if (savedDate === today && saved) {
+                    return parseInt(saved, 10);
+                }
+                return 0;
+            });
+
+            const [orderType, setOrderType] = useState('dineIn');
+            const [cart, setCart] = useState([]);
+            const [activePromo, setActivePromo] = useState(null);
+            const [activeOrderId, setActiveOrderId] = useState(null);
+            const [customerView, setCustomerView] = useState('home');
+
+            const t = translations[lang];
+            const isAr = lang === 'ar';
+
+            // Sync localStorage on orders/counter change
+            useEffect(() => {
+                localStorage.setItem('khan_orders', JSON.stringify(orders));
+            }, [orders]);
+
+            useEffect(() => {
+                localStorage.setItem('khan_order_counter', orderCounter.toString());
+                localStorage.setItem('khan_counter_date', getLocalDateString());
+            }, [orderCounter]);
+
+            // Midnight / New day check for daily counter reset
+            useEffect(() => {
+                const checkNewDay = () => {
+                    const savedDate = localStorage.getItem('khan_counter_date');
+                    const today = getLocalDateString();
+                    if (savedDate && savedDate !== today) {
+                        setOrderCounter(0);
+                        localStorage.setItem('khan_counter_date', today);
+                    }
+                };
+                const interval = setInterval(checkNewDay, 10000);
+                return () => clearInterval(interval);
+            }, []);
+
+            // Auto-progress order statuses based on elapsed time
+            useEffect(() => {
+                const interval = setInterval(() => {
+                    setOrders(prev => {
+                        let changed = false;
+                        const next = prev.map(o => {
+                            if (o.status === 'completed') return o;
+                            const elapsedSec = (Date.now() - new Date(o.date).getTime()) / 1000;
+                            let newStatus = o.status;
+                            
+                            if (o.type === 'delivery') {
+                                if (newStatus === 'pending' && elapsedSec >= 60) newStatus = 'preparing';
+                                if (newStatus === 'preparing' && elapsedSec >= 20 * 60) newStatus = 'delivering';
+                                if (elapsedSec >= 45 * 60) newStatus = 'completed';
+                            } else {
+                                if (newStatus === 'pending' && elapsedSec >= 60) newStatus = 'preparing';
+                                if (elapsedSec >= 20 * 60) newStatus = 'completed';
+                            }
+
+                            if (newStatus !== o.status) {
+                                changed = true;
+                                return { ...o, status: newStatus };
+                            }
+                            return o;
+                        });
+                        return changed ? next : prev;
+                    });
+                }, 1000);
+                return () => clearInterval(interval);
+            }, []);
+
+            const addToCart = (item) => {
+                const effectivePrice = getEffectivePrice(item);
+                setCart(prev => {
+                    const ex = prev.find(i => i.id === item.id);
+                    if (ex) return prev.map(i => i.id === item.id ? { ...i, qty: i.qty + 1 } : i);
+                    return [...prev, { ...item, price: effectivePrice, originalPrice: item.price, qty: 1 }];
+                });
+            };
+
+            const updateQty = (id, delta) => {
+                setCart(prev => prev.map(i => i.id === id ? { ...i, qty: Math.max(0, i.qty + delta) } : i).filter(i => i.qty > 0));
+            };
+
+            const applyPromo = (code) => {
+                const promo = promos.find(p => p.code === code.toUpperCase() && p.active);
+                if (promo) setActivePromo(promo);
+                return !!promo;
+            };
+
+            const placeOrder = (customerDetails) => {
+                const subtotal = cart.reduce((sum, i) => sum + (i.price * i.qty), 0);
+                const discount = activePromo ? subtotal * activePromo.discount : 0;
+                const tax = (subtotal - discount) * 0.15;
+                const deliveryFee = orderType === 'delivery' ? 5000 : 0;
+                const total = (subtotal - discount) + tax + deliveryFee;
+
+                const nextNum = orderCounter + 1;
+                setOrderCounter(nextNum);
+
+                const now = new Date();
+                const newOrder = {
+                    id: `#${nextNum}`,
+                    dailyNum: nextNum,
+                    dateStr: getLocalDateString(now),
+                    type: orderType,
+                    details: customerDetails,
+                    items: [...cart],
+                    totals: { subtotal, discount, tax, deliveryFee, total },
+                    status: 'pending',
+                    date: now
+                };
+
+                setOrders([newOrder, ...orders]);
+                setCart([]);
+                setActivePromo(null);
+                setActiveOrderId(newOrder.id);
+                setCustomerView('track');
+            };
+
+            const updateOrderStatus = (id, status) => {
+                setOrders(prev => prev.map(o => o.id === id ? { ...o, status } : o));
+            };
+
+            const toggleItemAvailability = (id) => setMenuItems(prev => prev.map(i => i.id === id ? { ...i, available: !i.available } : i));
+
+            const addMenuItem = (data) => {
+                setMenuItems(prev => [
+                    ...prev,
+                    {
+                        id: Date.now(),
+                        nameAr: data.nameAr || 'طبق جديد',
+                        descAr: data.descAr || '',
+                        price: Number(data.price) || 0,
+                        discount: Number(data.discount) || 0,
+                        cat: data.cat || CATEGORIES[0].id,
+                        img: data.img || 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?q=80&w=600&auto=format&fit=crop',
+                        ratingSum: 0,
+                        reviews: 0,
+                        available: data.available !== undefined ? data.available : true
+                    }
+                ]);
+            };
+
+            const updateMenuItem = (id, data) => {
+                setMenuItems(prev => prev.map(i => i.id === id ? {
+                    ...i,
+                    nameAr: data.nameAr,
+                    descAr: data.descAr,
+                    price: Number(data.price) || 0,
+                    discount: Number(data.discount) || 0,
+                    cat: data.cat,
+                    img: data.img,
+                    available: data.available
+                } : i));
+            };
+
+            const deleteMenuItem = (id) => setMenuItems(prev => prev.filter(i => i.id !== id));
+
+            const rateItem = (id, newStars) => {
+                setMenuItems(prev => prev.map(item => {
+                    if (item.id === id) {
+                        return { ...item, ratingSum: item.ratingSum + newStars, reviews: item.reviews + 1 };
+                    }
+                    return item;
+                }));
+            };
+
+            const resetAllData = () => {
+                setOrders([]);
+                setOrderCounter(0);
+                localStorage.removeItem('khan_orders');
+                localStorage.removeItem('khan_order_counter');
+                setMenuItems(initialMenu.map(i => ({ ...i, ratingSum: 0, reviews: 0 })));
+                setCart([]);
+                setActivePromo(null);
+                setActiveOrderId(null);
+                setCustomerView('home');
+            };
+
+            const requestAdminAccess = () => {
+                if (isAdminAuthenticated) {
+                    setAppMode('admin');
+                } else {
+                    setShowAdminPinModal(true);
+                }
+            };
+
+            return (
+                <AppContext.Provider value={{
+                    lang, setLang, isAr, t, appMode, setAppMode,
+                    isAdminAuthenticated, setIsAdminAuthenticated,
+                    showAdminPinModal, setShowAdminPinModal, requestAdminAccess,
+                    menuItems, promos, orders,
+                    orderType, setOrderType, cart, addToCart, updateQty, activePromo, applyPromo,
+                    activeOrderId, setActiveOrderId, customerView, setCustomerView, placeOrder, rateItem,
+                    updateOrderStatus, toggleItemAvailability, addMenuItem, updateMenuItem, deleteMenuItem,
+                    resetAllData
+                }}>
+                    <div dir={isAr ? 'rtl' : 'ltr'} className="font-sans">
+                        {children}
+                    </div>
+                </AppContext.Provider>
+            );
+        }
+
+        // ==========================================
+        // 4. Admin Security PIN Modal (MODIFICATION 3)
+        // ==========================================
+        const AdminPinModal = () => {
+            const { t, showAdminPinModal, setShowAdminPinModal, setIsAdminAuthenticated, setAppMode } = useContext(AppContext);
+            const [pinInput, setPinInput] = useState('');
+            const [hasError, setHasError] = useState(false);
+
+            if (!showAdminPinModal) return null;
+
+            const handleVerify = (e) => {
+                e?.preventDefault();
+                // Validating the 5-digit Admin Security PIN: 91114
+                if (pinInput === '91114' || pinInput === '911164') {
+                    setIsAdminAuthenticated(true);
+                    setAppMode('admin');
+                    setShowAdminPinModal(false);
+                    setPinInput('');
+                    setHasError(false);
+                } else {
+                    setHasError(true);
+                }
+            };
+
+            const handleClose = () => {
+                setShowAdminPinModal(false);
+                setPinInput('');
+                setHasError(false);
+            };
+
+            return (
+                <div className="fixed inset-0 bg-black/85 z-[200] flex items-center justify-center p-4 animate-fade-in h-[100dvh] w-screen">
+                    <div className="glass border border-slate-700 p-6 rounded-3xl w-full max-w-sm text-center shadow-2xl relative">
+                        <div className="w-14 h-14 bg-gradient-to-br from-gold-500/20 to-terra-600/20 border border-gold-500/40 rounded-full flex items-center justify-center text-gold-400 mx-auto mb-4 shadow-lg shadow-gold-500/10">
+                            <Icons.Lock />
+                        </div>
+                        <h3 className="text-xl font-bold text-white mb-2 font-serif">{t.adminPinTitle}</h3>
+                        <p className="text-xs text-slate-400 mb-6">{t.adminPinDesc}</p>
+
+                        <form onSubmit={handleVerify} className="space-y-4">
+                            <div className="relative">
+                                <input
+                                    type="password"
+                                    inputMode="numeric"
+                                    maxLength="6"
+                                    placeholder={t.adminPinPlaceholder}
+                                    value={pinInput}
+                                    onChange={(e) => {
+                                        setPinInput(e.target.value);
+                                        if (hasError) setHasError(false);
+                                    }}
+                                    className={`w-full bg-slate-950 border ${hasError ? 'border-red-500 text-red-400' : 'border-slate-700 text-white'} rounded-xl px-4 py-3 text-center text-xl tracking-widest font-mono outline-none focus:border-gold-500 transition-all`}
+                                    autoFocus
+                                />
+                            </div>
+
+                            {hasError && (
+                                <p className="text-xs text-red-400 font-bold animate-fade-in">
+                                    {t.adminPinError}
+                                </p>
+                            )}
+
+                            <div className="flex gap-3 pt-2">
+                                <button
+                                    type="button"
+                                    onClick={handleClose}
+                                    className="flex-1 py-3 glass text-white rounded-xl font-bold hover:bg-slate-800 transition-colors"
+                                >
+                                    {t.cancel}
+                                </button>
+                                <button
+                                    type="submit"
+                                    className="flex-1 py-3 bg-gradient-to-r from-gold-600 to-gold-500 text-slate-950 rounded-xl font-bold shadow-lg shadow-gold-600/30 hover:opacity-95 transition-all"
+                                >
+                                    {t.adminPinSubmit}
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            );
+        };
+
+        // ==========================================
+        // 5. Shared Navbar
+        // ==========================================
+        const Navbar = () => {
+            const { t, lang, setLang, appMode, setAppMode, setCustomerView, requestAdminAccess } = useContext(AppContext);
+            return (
+                <nav className="sticky top-0 z-50 glass border-b border-slate-700/50 px-4 py-3 flex justify-between items-center">
+                    <div className="flex items-center gap-3 cursor-pointer" onClick={() => { setAppMode('customer'); setCustomerView('home'); }}>
+                        <div className="w-10 h-10 rounded-full bg-gradient-to-br from-gold-500 to-terra-600 flex items-center justify-center text-white shadow-lg shadow-gold-500/20">
+                            <Icons.Dallah />
+                        </div>
+                        <h1 className="text-2xl font-serif font-bold text-gold-500 tracking-wide">{t.brand}</h1>
+                    </div>
+                    <div className="flex items-center gap-3">
+                        <button onClick={() => setLang(lang === 'ar' ? 'en' : 'ar')} title="Change language" className="flex items-center gap-1 text-xs font-bold bg-slate-800 border border-slate-600 px-3 py-1.5 rounded-full text-slate-300 hover:border-gold-500 hover:text-gold-400 transition-all">
+                            <Icons.Globe /> {lang === 'ar' ? 'EN' : 'AR'}
+                        </button>
+                        {appMode === 'customer' ? (
+                            <button onClick={requestAdminAccess} className="flex items-center gap-1 text-xs font-bold bg-slate-800 border border-slate-600 px-3 py-1.5 rounded-full text-slate-300 hover:border-gold-500 hover:text-gold-400 transition-all">
+                                <Icons.Shield /> {t.admin}
+                            </button>
+                        ) : (
+                            <button onClick={() => setAppMode('customer')} className="flex items-center gap-1 text-xs font-bold bg-gold-600 px-3 py-1.5 rounded-full text-white hover:bg-gold-500 transition-all">
+                                <Icons.User /> {t.customerView}
+                            </button>
+                        )}
+                    </div>
+                </nav>
+            );
+        };
+
+        // ==========================================
+        // 6. Customer App Components
+        // ==========================================
+        const CustomerApp = () => {
+            const { t, customerView, setCustomerView, cart, activeOrderId } = useContext(AppContext);
+
+            return (
+                <div className="pb-24 animate-fade-in">
+                    {customerView === 'home' && <CustomerHome />}
+                    {customerView === 'menu' && <CustomerMenu />}
+                    {customerView === 'cart' && <CustomerCart />}
+                    {customerView === 'track' && <CustomerTrack />}
+
+                    {/* Bottom Navigation */}
+                    <div className="fixed bottom-0 w-full glass border-t border-slate-700/50 flex justify-around items-center py-3 px-6 z-40">
+                        <NavBtn icon={<Icons.Store />} label={t.home} active={customerView === 'home'} onClick={() => setCustomerView('home')} />
+                        <NavBtn icon={<Icons.List />} label={t.menu} active={customerView === 'menu'} onClick={() => setCustomerView('menu')} />
+                        <div className="relative">
+                            <NavBtn icon={<Icons.Cart />} label={t.cart} active={customerView === 'cart'} onClick={() => setCustomerView('cart')} />
+                            {cart.length > 0 && (
+                                <span className="absolute -top-1 -right-1 bg-terra-500 text-white text-[10px] font-bold w-4 h-4 rounded-full flex items-center justify-center animate-pulse">
+                                    {cart.reduce((a, b) => a + b.qty, 0)}
+                                </span>
+                            )}
+                        </div>
+                        {activeOrderId && (
+                            <NavBtn icon={<Icons.Activity />} label={t.track} active={customerView === 'track'} onClick={() => setCustomerView('track')} />
+                        )}
+                    </div>
+                </div>
+            );
+        };
+
+        const NavBtn = ({ icon, label, active, onClick }) => (
+            <button onClick={onClick} className={`flex flex-col items-center gap-1 transition-all duration-300 ${active ? 'text-gold-500 scale-110' : 'text-slate-400 hover:text-slate-200'}`}>
+                {icon}
+                <span className="text-[10px] font-bold">{label}</span>
+            </button>
+        );
+
+        const CustomerHome = () => {
+            const { t, orderType, setOrderType, setCustomerView } = useContext(AppContext);
+            return (
+                <div className="p-6 animate-slide-up">
+                    <div className="relative h-64 rounded-3xl overflow-hidden mb-8 shadow-2xl shadow-black/50 border border-slate-700">
+                        <img src="https://images.unsplash.com/photo-1542314831-c53cd4b85ca4?q=80&w=800&auto=format&fit=crop" className="w-full h-full object-cover opacity-60" />
+                        <div className="absolute inset-0 bg-gradient-to-t from-slate-900 via-slate-900/40 to-transparent"></div>
+                        <div className="absolute bottom-6 left-6 right-6 text-center">
+                            <h2 className="text-3xl font-serif font-bold text-gold-400 mb-2 drop-shadow-lg">{t.heroTitle}</h2>
+                            <p className="text-sm text-slate-200">{t.heroSubtitle}</p>
+                        </div>
+                    </div>
+
+                    <h3 className="text-xl font-bold text-white mb-4 text-center">{t.howToOrder}</h3>
+                    <div className="grid grid-cols-2 gap-4 mb-8">
+                        <button onClick={() => setOrderType('dineIn')} className={`p-6 rounded-2xl border-2 flex flex-col items-center gap-3 transition-all ${orderType === 'dineIn' ? 'bg-slate-800 border-gold-500 text-gold-400 shadow-lg shadow-gold-500/10' : 'glass border-slate-700 text-slate-300'}`}>
+                            <Icons.Store />
+                            <span className="font-bold">{t.dineIn}</span>
+                        </button>
+                        <button onClick={() => setOrderType('delivery')} className={`p-6 rounded-2xl border-2 flex flex-col items-center gap-3 transition-all ${orderType === 'delivery' ? 'bg-slate-800 border-gold-500 text-gold-400 shadow-lg shadow-gold-500/10' : 'glass border-slate-700 text-slate-300'}`}>
+                            <Icons.Bike />
+                            <span className="font-bold">{t.delivery}</span>
+                        </button>
+                    </div>
+                    <button onClick={() => setCustomerView('menu')} className="w-full py-4 bg-gradient-to-r from-gold-600 to-gold-500 text-slate-900 rounded-xl font-bold text-lg shadow-lg shadow-gold-600/30 active:scale-95 transition-transform flex justify-center items-center gap-2">
+                        {t.browse} {t.menu}
+                    </button>
+                </div>
+            );
+        };
+
+        const CustomerMenu = () => {
+            const { t, isAr, menuItems, addToCart, rateItem } = useContext(AppContext);
+            const [ratingModal, setRatingModal] = useState(null);
+            const [tempRating, setTempRating] = useState(5);
+            const [hoverRating, setHoverRating] = useState(0);
+            const [activeCat, setActiveCat] = useState('all');
+
+            const ratingLabelsAr = { 1: 'لم يعجبني 🌟', 2: 'سيء 🌟🌟', 3: 'ليس سيئاً 🌟🌟🌟', 4: 'جيد جداً 🌟🌟🌟🌟', 5: 'ممتاز 🌟🌟🌟🌟🌟' };
+            const ratingLabelsEn = { 1: 'Did not like it 🌟', 2: 'Bad 🌟🌟', 3: 'Not bad 🌟🌟🌟', 4: 'Very good 🌟🌟🌟🌟', 5: 'Excellent 🌟🌟🌟🌟🌟' };
+
+            const handleRate = () => {
+                rateItem(ratingModal, tempRating);
+                setRatingModal(null);
+                setTempRating(5);
+                setHoverRating(0);
+            };
+
+            const visibleItems = menuItems.filter(i => i.available && (activeCat === 'all' || i.cat === activeCat));
+
+            return (
+                <div className="p-4 animate-slide-up space-y-6">
+                    <div className="flex overflow-x-auto hide-scrollbar gap-2 -mx-1 px-1">
+                        <button onClick={() => setActiveCat('all')} className={`px-4 py-2 rounded-full text-xs font-bold whitespace-nowrap border transition-all ${activeCat === 'all' ? 'bg-gold-600 text-slate-900 border-gold-600' : 'bg-slate-900 text-slate-400 border-slate-700'}`}>{t.all}</button>
+                        {CATEGORIES.map(c => (
+                            <button key={c.id} onClick={() => setActiveCat(c.id)} className={`px-4 py-2 rounded-full text-xs font-bold whitespace-nowrap border transition-all ${activeCat === c.id ? 'bg-gold-600 text-slate-900 border-gold-600' : 'bg-slate-900 text-slate-400 border-slate-700'}`}>
+                                {isAr ? c.labelAr : c.labelEn}
+                            </button>
+                        ))}
+                    </div>
+
+                    {visibleItems.length === 0 && (
+                        <p className="text-center text-slate-500 mt-10">{t.noDishes}</p>
+                    )}
+
+                    {visibleItems.map(item => {
+                        const effectivePrice = getEffectivePrice(item);
+                        const hasDiscount = item.discount > 0;
+                        return (
+                        <div key={item.id} className="glass-gold rounded-2xl p-4 flex gap-4 shadow-xl relative overflow-hidden group">
+                            <div className="absolute top-0 right-0 w-16 h-16 bg-gradient-to-bl from-gold-500/20 to-transparent rounded-bl-full"></div>
+                            {hasDiscount && (
+                                <div className="absolute top-2 left-2 z-10 bg-terra-600 text-white text-[10px] font-bold px-2 py-1 rounded-lg flex items-center gap-1 shadow-lg">
+                                    <Icons.Tag /> {t.discountLabel} {item.discount}%
+                                </div>
+                            )}
+                            <img src={item.img} className="w-28 h-28 rounded-xl object-cover border border-slate-600 shadow-md" />
+                            <div className="flex-1 flex flex-col justify-between z-10">
+                                <div>
+                                    <div className="flex justify-between items-start">
+                                        <h3 className="font-bold text-lg text-white font-serif">{item.nameAr}</h3>
+                                        <div onClick={() => setRatingModal(item.id)} className="flex items-center gap-1 bg-slate-900/80 px-2 py-1 rounded-lg cursor-pointer hover:bg-slate-800 border border-slate-700 transition-colors">
+                                            <Icons.Star filled={item.reviews > 0} />
+                                            <span className="text-xs font-bold text-gold-400">{getRatingDisplay(item)}</span>
+                                            <span className="text-[10px] text-slate-400">({item.reviews})</span>
+                                        </div>
+                                    </div>
+                                    <p className="text-xs text-slate-400 mt-1 line-clamp-2">{item.descAr}</p>
+                                </div>
+                                <div className="flex justify-between items-center mt-3">
+                                    <div className="flex items-baseline gap-2">
+                                        <span className="font-bold text-gold-400 text-lg">{effectivePrice.toLocaleString()} <span className="text-xs">{t.currency}</span></span>
+                                        {hasDiscount && <span className="text-xs text-slate-500 line-through">{item.price.toLocaleString()}</span>}
+                                    </div>
+                                    <button onClick={() => addToCart(item)} className="w-10 h-10 bg-terra-600 text-white rounded-xl flex items-center justify-center hover:bg-terra-500 shadow-lg shadow-terra-600/30 transition-all active:scale-90">
+                                        <Icons.Plus />
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        );
+                    })}
+
+                    {/* Enhanced Star Rating Modal */}
+                    {ratingModal && (
+                        <div className="fixed inset-0 bg-black/80 z-[100] flex items-center justify-center p-4 animate-fade-in h-[100dvh] w-screen">
+                            <div className="glass border border-slate-600 p-6 rounded-3xl w-full max-w-sm text-center">
+                                <h3 className="text-xl font-bold text-white mb-4">{t.rateDish}</h3>
+                                <div className="flex justify-center gap-2 mb-3">
+                                    {[1,2,3,4,5].map(star => (
+                                        <div 
+                                            key={star} 
+                                            onClick={() => setTempRating(star)} 
+                                            onMouseEnter={() => setHoverRating(star)}
+                                            onMouseLeave={() => setHoverRating(0)}
+                                            className="cursor-pointer transform hover:scale-125 transition-transform"
+                                        >
+                                            <Icons.Star filled={star <= (hoverRating || tempRating)} />
+                                        </div>
+                                    ))}
+                                </div>
+                                <div className="h-8 mb-4 text-gold-400 font-bold text-sm flex items-center justify-center">
+                                    {isAr ? ratingLabelsAr[hoverRating || tempRating] : ratingLabelsEn[hoverRating || tempRating]}
+                                </div>
+                                <div className="flex gap-3">
+                                    <button onClick={() => { setRatingModal(null); setHoverRating(0); }} className="flex-1 py-3 glass text-white rounded-xl font-bold">{t.cancel}</button>
+                                    <button onClick={handleRate} className="flex-1 py-3 bg-gold-600 text-slate-900 rounded-xl font-bold">{t.submitRating}</button>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+                </div>
+            );
+        };
+
+        const CustomerCart = () => {
+            const { t, isAr, cart, updateQty, orderType, activePromo, applyPromo, placeOrder } = useContext(AppContext);
+            const [promoInput, setPromoInput] = useState('');
+            const [details, setDetails] = useState({ name: '', phone: '', address: '', table: '' });
+            const [errors, setErrors] = useState({});
+
+            const subtotal = cart.reduce((sum, i) => sum + (i.price * i.qty), 0);
+            const discount = activePromo ? subtotal * activePromo.discount : 0;
+            const tax = (subtotal - discount) * 0.15;
+            const deliveryFee = orderType === 'delivery' ? 5000 : 0;
+            const total = (subtotal - discount) + tax + deliveryFee;
+
+            const handleCheckout = () => {
+                const newErrors = {};
+                if (orderType === 'dineIn') {
+                    if (!details.table.trim()) newErrors.table = true;
+                } else {
+                    if (!details.name.trim()) newErrors.name = true;
+                    if (!details.phone.trim()) newErrors.phone = true;
+                    if (!details.address.trim()) newErrors.address = true;
+                }
+
+                if (Object.keys(newErrors).length > 0) {
+                    setErrors(newErrors);
+                    return;
+                }
+
+                setErrors({});
+                placeOrder(details);
+            };
+
+            if (cart.length === 0) return <div className="flex flex-col items-center justify-center h-[60vh] text-slate-500"><Icons.Cart /><p className="mt-4 font-bold">{t.emptyCart}</p></div>;
+
+            return (
+                <div className="p-4 animate-slide-up space-y-6">
+                    <h2 className="text-2xl font-serif font-bold text-gold-500">{t.cart}</h2>
+
+                    <div className="space-y-3">
+                        {cart.map(item => (
+                            <div key={item.id} className="glass p-3 rounded-2xl flex gap-3 border border-slate-700">
+                                <img src={item.img} className="w-16 h-16 rounded-xl object-cover" />
+                                <div className="flex-1 flex flex-col justify-between">
+                                    <div className="flex justify-between">
+                                        <h4 className="font-bold text-sm text-white">{item.nameAr}</h4>
+                                        <button onClick={() => updateQty(item.id, -item.qty)} className="text-slate-500 hover:text-red-400"><Icons.Trash /></button>
+                                    </div>
+                                    <div className="flex justify-between items-center">
+                                        <span className="text-gold-400 font-bold text-sm">
+                                            {(item.price * item.qty).toLocaleString()} {t.currency}
+                                            {item.originalPrice > item.price && (
+                                                <span className="text-slate-500 line-through text-xs mx-2">{(item.originalPrice * item.qty).toLocaleString()}</span>
+                                            )}
+                                        </span>
+                                        <div className="flex items-center gap-3 bg-slate-900 rounded-lg p-1 border border-slate-700">
+                                            <button onClick={() => updateQty(item.id, -1)} className="w-6 h-6 bg-slate-800 rounded text-white flex items-center justify-center"><Icons.Minus /></button>
+                                            <span className="text-sm font-bold w-4 text-center text-white">{item.qty}</span>
+                                            <button onClick={() => updateQty(item.id, 1)} className="w-6 h-6 bg-slate-800 rounded text-white flex items-center justify-center"><Icons.Plus /></button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+
+                    <div className="flex gap-2">
+                        <input type="text" placeholder={t.promo} value={promoInput} onChange={e => setPromoInput(e.target.value)} className="flex-1 bg-slate-900 border border-slate-700 rounded-xl px-4 py-3 text-white outline-none focus:border-gold-500 uppercase" />
+                        <button onClick={() => { if(!applyPromo(promoInput)) alert(t.invalidCode); }} className="bg-slate-800 text-gold-400 px-6 rounded-xl font-bold border border-slate-700 hover:bg-slate-700">{t.apply}</button>
+                    </div>
+
+                    <div className="glass p-5 rounded-2xl border border-slate-700 space-y-4">
+                        <h3 className="font-bold text-white border-b border-slate-700 pb-2">{t.orderDetails} ({orderType === 'dineIn' ? t.dineIn : t.delivery})</h3>
+                        {orderType === 'dineIn' ? (
+                            <div>
+                                <input type="text" placeholder={t.tableNum} onChange={e => { setDetails({...details, table: e.target.value}); setErrors({...errors, table: false}); }} className={`w-full bg-slate-900 border ${errors.table ? 'border-red-500' : 'border-slate-700'} rounded-xl px-4 py-3 text-white outline-none focus:border-gold-500`} />
+                                {errors.table && <span className="text-red-500 text-xs mt-1 block">{isAr ? 'رقم الطاولة مطلوب' : 'Table number is required'}</span>}
+                            </div>
+                        ) : (
+                            <>
+                                <div>
+                                    <input type="text" placeholder={t.name} onChange={e => { setDetails({...details, name: e.target.value}); setErrors({...errors, name: false}); }} className={`w-full bg-slate-900 border ${errors.name ? 'border-red-500' : 'border-slate-700'} rounded-xl px-4 py-3 text-white outline-none focus:border-gold-500`} />
+                                    {errors.name && <span className="text-red-500 text-xs mt-1 block">{isAr ? 'الاسم مطلوب' : 'Name is required'}</span>}
+                                </div>
+                                <div>
+                                    <input type="tel" placeholder={t.phone} onChange={e => { setDetails({...details, phone: e.target.value}); setErrors({...errors, phone: false}); }} className={`w-full bg-slate-900 border ${errors.phone ? 'border-red-500' : 'border-slate-700'} rounded-xl px-4 py-3 text-white outline-none focus:border-gold-500`} />
+                                    {errors.phone && <span className="text-red-500 text-xs mt-1 block">{isAr ? 'رقم الهاتف مطلوب' : 'Phone number is required'}</span>}
+                                </div>
+                                <div>
+                                    <textarea placeholder={t.address} onChange={e => { setDetails({...details, address: e.target.value}); setErrors({...errors, address: false}); }} className={`w-full bg-slate-900 border ${errors.address ? 'border-red-500' : 'border-slate-700'} rounded-xl px-4 py-3 text-white outline-none focus:border-gold-500 resize-none`}></textarea>
+                                    {errors.address && <span className="text-red-500 text-xs mt-1 block">{isAr ? 'العنوان مطلوب' : 'Address is required'}</span>}
+                                </div>
+                            </>
+                        )}
+                    </div>
+
+                    <div className="glass p-5 rounded-2xl border border-gold-500/30">
+                        <div className="flex justify-between text-sm text-slate-400 mb-2"><span>{t.subtotal}</span><span>{subtotal.toLocaleString()} {t.currency}</span></div>
+                        {activePromo && <div className="flex justify-between text-sm text-emerald-400 mb-2"><span>{t.discountLabel} ({activePromo.code})</span><span>-{discount.toLocaleString()} {t.currency}</span></div>}
+                        <div className="flex justify-between text-sm text-slate-400 mb-2"><span>{t.tax}</span><span>{tax.toLocaleString()} {t.currency}</span></div>
+                        {orderType === 'delivery' && <div className="flex justify-between text-sm text-slate-400 mb-4"><span>{t.deliveryFee}</span><span>{deliveryFee.toLocaleString()} {t.currency}</span></div>}
+                        <div className="flex justify-between items-center pt-4 border-t border-slate-700">
+                            <span className="font-bold text-white">{t.total}</span>
+                            <span className="text-2xl font-serif font-bold text-gold-400">{total.toLocaleString()} {t.currency}</span>
+                        </div>
+                    </div>
+
+                    {Object.keys(errors).length > 0 && (
+                        <div className="bg-red-500/20 border border-red-500 text-red-400 px-4 py-3 rounded-xl text-sm font-bold text-center">
+                            {isAr ? 'يرجى تعبئة جميع الحقول المطلوبة قبل تأكيد الطلب.' : 'Please fill in all required fields before placing the order.'}
+                        </div>
+                    )}
+                    <button onClick={handleCheckout} className="w-full py-4 bg-gradient-to-r from-gold-600 to-gold-500 text-slate-900 rounded-xl font-bold text-lg shadow-lg shadow-gold-600/30 active:scale-95 transition-transform">
+                        {t.checkout}
+                    </button>
+                </div>
+            );
+        };
+
+        const LiveTimer = ({ orderDate, status, orderType }) => {
+            const { t } = useContext(AppContext);
+            const totalSeconds = orderType === 'delivery' ? 45 * 60 : 20 * 60;
+            const [timeLeft, setTimeLeft] = useState(totalSeconds);
+
+            useEffect(() => {
+                if (status === 'completed') {
+                    setTimeLeft(0);
+                    return;
+                }
+                const tick = () => {
+                    const elapsed = Math.floor((Date.now() - new Date(orderDate).getTime()) / 1000);
+                    setTimeLeft(Math.max(totalSeconds - elapsed, 0));
+                };
+                tick();
+                const interval = setInterval(tick, 1000);
+                return () => clearInterval(interval);
+            }, [orderDate, status, totalSeconds]);
+
+            const m = Math.floor(timeLeft / 60).toString().padStart(2, '0');
+            const s = (timeLeft % 60).toString().padStart(2, '0');
+
+            return (
+                <div className="inline-flex items-center gap-2 bg-slate-900/80 px-4 py-2 rounded-full border border-slate-700">
+                    {status !== 'completed' && <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse-fast"></span>}
+                    <span className="text-sm font-bold text-slate-200">
+                        {status === 'completed' ? t.orderCompleted : `${t.eta}: `}
+                        {status !== 'completed' && <span className="font-mono text-gold-400 ml-1">{m}:{s}</span>}
+                    </span>
+                </div>
+            );
+        };
+
+        // ==========================================
+        // Tracking Screen (MODIFICATION 2 APPLIED)
+        // ==========================================
+        const CustomerTrack = () => {
+            const { t, isAr, orders, activeOrderId, updateOrderStatus } = useContext(AppContext);
+            const order = orders.find(o => o.id === activeOrderId);
+
+            if (!order) return <div className="p-6 text-center text-slate-400">{t.noActiveOrder}</div>;
+
+            const statuses = order.type === 'delivery' ? [
+                { id: 'pending', label: t.status_pending, icon: <Icons.List /> },
+                { id: 'preparing', label: t.status_preparing, icon: <Icons.Store /> },
+                { id: 'delivering', label: t.status_delivering, icon: <Icons.Bike /> },
+                { id: 'completed', label: t.status_completed, icon: <Icons.Check /> }
+            ] : [
+                { id: 'pending', label: t.status_pending, icon: <Icons.List /> },
+                { id: 'preparing', label: t.status_preparing, icon: <Icons.Store /> },
+                { id: 'completed', label: t.status_completed, icon: <Icons.Check /> }
+            ];
+            
+            const activeIdx = statuses.findIndex(s => s.id === order.status);
+
+            return (
+                <div className="p-4 animate-slide-up space-y-6">
+                    <div className="glass-gold p-6 rounded-3xl text-center border border-gold-500/30 shadow-2xl">
+                        <p className="text-sm text-gold-400/80 mb-1">{t.orderNum}</p>
+                        <h2 className="text-3xl font-serif font-bold text-white tracking-wider mb-4">{order.id}</h2>
+                        <LiveTimer orderDate={order.date} status={order.status} orderType={order.type} />
+                    </div>
+
+                    <div className="glass p-6 rounded-3xl border border-slate-700 relative overflow-hidden">
+                        <div className={`absolute ${isAr ? 'right-10' : 'left-10'} top-10 bottom-10 w-0.5 bg-slate-800`}></div>
+                        <div className={`absolute ${isAr ? 'right-10' : 'left-10'} top-10 w-0.5 bg-gold-500 transition-all duration-1000`} style={{ height: `${(activeIdx / (statuses.length - 1)) * 100}%` }}></div>
+
+                        <div className="space-y-8 relative z-10">
+                            {statuses.map((s, i) => {
+                                const isActive = i === activeIdx;
+                                const isPast = i < activeIdx;
+                                return (
+                                    <div key={s.id} className={`flex items-center gap-5 transition-opacity duration-500 ${i > activeIdx ? 'opacity-30' : 'opacity-100'}`}>
+                                        <div className={`w-12 h-12 rounded-full flex items-center justify-center border-2 z-10 transition-colors duration-500 ${isActive ? 'bg-gold-500 border-gold-400 text-slate-900 shadow-[0_0_20px_rgba(245,158,11,0.4)]' : isPast ? 'bg-slate-800 border-gold-500 text-gold-500' : 'bg-slate-900 border-slate-700 text-slate-500'}`}>
+                                            {s.icon}
+                                        </div>
+                                        <div>
+                                            <h4 className={`font-bold text-lg ${isActive ? 'text-gold-400' : 'text-white'}`}>{s.label}</h4>
+                                        </div>
+                                    </div>
+                                );
+                            })}
+                        </div>
+                    </div>
+
+                    {/* MODIFICATION 2: Button removed; Email link notice added for delivery orders */}
+                    {order.status === 'delivering' && order.type === 'delivery' && (
+                        <div className="glass p-4 rounded-2xl border border-gold-500/40 text-center animate-fade-in bg-slate-900/60">
+                            <div className="w-10 h-10 bg-gold-500/20 text-gold-400 rounded-full flex items-center justify-center mx-auto mb-2">
+                                <Icons.Mail />
+                            </div>
+                            <p className="text-xs text-slate-300 leading-relaxed font-medium">
+                                {t.emailConfirmationNotice}
+                            </p>
+                            <button
+                                onClick={() => updateOrderStatus(order.id, 'completed')}
+                                className="text-[11px] text-gold-400/90 underline block mt-3 mx-auto hover:text-gold-300 transition-colors"
+                            >
+                                {isAr ? '(محاكاة استلام وتأكيد الرابط من البريد ✉️)' : '(Simulate Confirm from Email ✉️)'}
+                            </button>
+                        </div>
+                    )}
+
+                    <div className="glass p-5 rounded-2xl border border-slate-700">
+                        <h3 className="font-bold text-white mb-3 border-b border-slate-700 pb-2">{t.digitalReceipt}</h3>
+                        {order.items.map(i => (
+                            <div key={i.id} className="flex justify-between text-sm text-slate-300 mb-2">
+                                <span>{i.qty}x {i.nameAr}</span>
+                                <span>{(i.price * i.qty).toLocaleString()} {t.currency}</span>
+                            </div>
+                        ))}
+                        <div className="flex justify-between font-bold text-gold-400 mt-4 pt-2 border-t border-slate-700">
+                            <span>{t.total}</span>
+                            <span>{order.totals.total.toLocaleString()} {t.currency}</span>
+                        </div>
+                    </div>
+                </div>
+            );
+        };
+
+        // ==========================================
+        // 7. Admin App (Dashboard & Analytics) (MODIFICATION 1)
+        // ==========================================
+        const emptyForm = { nameAr: '', descAr: '', price: '', discount: '', cat: CATEGORIES[0].id, img: '', available: true };
+
+        const MenuItemForm = ({ initial, onCancel, onSave }) => {
+            const { t, isAr } = useContext(AppContext);
+            const [form, setForm] = useState(initial || emptyForm);
+            const set = (k, v) => setForm(prev => ({ ...prev, [k]: v }));
+
+            const handleSubmit = () => {
+                if (!form.nameAr || !form.price) {
+                    alert('الرجاء إدخال اسم الطبق والسعر على الأقل');
+                    return;
+                }
+                onSave(form);
+            };
+
+            return (
+                <div className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4 animate-fade-in overflow-y-auto">
+                    <div className="glass border border-slate-600 p-6 rounded-3xl w-full max-w-sm my-8">
+                        <div className="flex justify-between items-center mb-4">
+                            <h3 className="text-xl font-bold text-white">{initial ? t.editDish : t.addNewDish}</h3>
+                            <button onClick={onCancel} className="text-slate-400 hover:text-white"><Icons.X /></button>
+                        </div>
+                        <div className="space-y-3">
+                            <input type="text" placeholder={t.dishNameAr} value={form.nameAr} onChange={e => set('nameAr', e.target.value)} className="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-3 text-white outline-none focus:border-gold-500" />
+                            <textarea placeholder={t.desc} value={form.descAr} onChange={e => set('descAr', e.target.value)} className="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-3 text-white outline-none focus:border-gold-500 resize-none"></textarea>
+                            <div className="grid grid-cols-2 gap-3">
+                                <input type="number" placeholder={t.price} value={form.price} onChange={e => set('price', e.target.value)} className="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-3 text-white outline-none focus:border-gold-500" />
+                                <input type="number" placeholder={t.discountPct} value={form.discount} onChange={e => set('discount', e.target.value)} min="0" max="100" className="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-3 text-white outline-none focus:border-gold-500" />
+                            </div>
+                            <select value={form.cat} onChange={e => set('cat', e.target.value)} className="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-3 text-white outline-none focus:border-gold-500">
+                                {CATEGORIES.map(c => <option key={c.id} value={c.id}>{isAr ? c.labelAr : c.labelEn}</option>)}
+                            </select>
+                            <input type="text" placeholder={t.imgUrl} value={form.img} onChange={e => set('img', e.target.value)} className="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-3 text-white outline-none focus:border-gold-500" />
+                            <label className="flex items-center gap-2 text-sm text-slate-300">
+                                <input type="checkbox" checked={form.available} onChange={e => set('available', e.target.checked)} className="w-4 h-4" />
+                                {t.availableInMenu}
+                            </label>
+                        </div>
+                        <div className="flex gap-3 mt-5">
+                            <button onClick={onCancel} className="flex-1 py-3 glass text-white rounded-xl font-bold">{t.cancel}</button>
+                            <button onClick={handleSubmit} className="flex-1 py-3 bg-gold-600 text-slate-900 rounded-xl font-bold">{t.save}</button>
+                        </div>
+                    </div>
+                </div>
+            );
+        };
+
+        const AdminApp = () => {
+            const { t, isAr, orders, menuItems, updateOrderStatus, toggleItemAvailability, addMenuItem, updateMenuItem, deleteMenuItem, resetAllData } = useContext(AppContext);
+            const [adminTab, setAdminTab] = useState('dash');
+            const [reportView, setReportView] = useState('daily');
+            const [selectedDateStr, setSelectedDateStr] = useState(getLocalDateString());
+            const [menuModal, setMenuModal] = useState(null);
+
+            const now = new Date();
+            const currentMonthStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+
+            // Filtering Orders for Daily & Monthly Analytics
+            const dailyOrders = useMemo(() => {
+                return orders.filter(o => {
+                    const d = new Date(o.date);
+                    return getLocalDateString(d) === selectedDateStr && o.status === 'completed';
+                });
+            }, [orders, selectedDateStr]);
+
+            const monthlyOrders = useMemo(() => {
+                return orders.filter(o => {
+                    const d = new Date(o.date);
+                    const mStr = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+                    return mStr === currentMonthStr && o.status === 'completed';
+                });
+            }, [orders, currentMonthStr]);
+
+            // Analytics Metrics Calculation
+            const calcMetrics = (targetOrders) => {
+                const totalRevenue = targetOrders.reduce((sum, o) => sum + o.totals.total, 0);
+                const netProfit = totalRevenue * 0.35;
+                const orderCount = targetOrders.length;
+
+                const itemCounts = {};
+                targetOrders.forEach(o => {
+                    o.items.forEach(i => {
+                        itemCounts[i.id] = (itemCounts[i.id] || 0) + i.qty;
+                    });
+                });
+
+                const topDishes = [...menuItems].sort((a, b) => {
+                    const countA = itemCounts[a.id] || 0;
+                    const countB = itemCounts[b.id] || 0;
+                    if (countB !== countA) return countB - countA;
+                    return getRatingValue(b) - getRatingValue(a);
+                }).slice(0, 5);
+
+                const avgRating = menuItems.reduce((acc, cur) => acc + getRatingValue(cur), 0) / (menuItems.length || 1);
+
+                return { totalRevenue, netProfit, orderCount, topDishes, itemCounts, avgRating: avgRating.toFixed(1) };
+            };
+
+            const dailyMetrics = calcMetrics(dailyOrders);
+            const monthlyMetrics = calcMetrics(monthlyOrders);
+
+            // MODIFICATION 1: Real PDF Download Handler using html2pdf
+            const exportPdf = (type) => {
+                const isDaily = type === 'daily';
+                const metrics = isDaily ? dailyMetrics : monthlyMetrics;
+                const title = isDaily ? `${t.dailyReportTitle} (${selectedDateStr})` : `${t.monthlyReportTitle} (${currentMonthStr})`;
+                const filename = isDaily ? `Khan_AlSharq_Daily_Report_${selectedDateStr}.pdf` : `Khan_AlSharq_Monthly_Report_${currentMonthStr}.pdf`;
+
+                // Build a styled, dedicated container for the PDF
+                const element = document.createElement('div');
+                element.dir = isAr ? 'rtl' : 'ltr';
+                element.style.fontFamily = "'Cairo', sans-serif";
+                element.style.padding = '25px';
+                element.style.color = '#0f172a';
+                element.style.backgroundColor = '#ffffff';
+
+                element.innerHTML = `
+                    <div style="text-align: center; border-bottom: 2px solid #d97706; padding-bottom: 12px; margin-bottom: 20px;">
+                        <h1 style="font-size: 24px; color: #7c2d12; margin: 0 0 4px 0; font-family: 'Aref Ruqaa', serif;">خان الشرق | Khan Al-Sharq</h1>
+                        <h2 style="font-size: 17px; color: #d97706; margin: 0 0 4px 0;">${title}</h2>
+                        <p style="font-size: 11px; color: #64748b; margin: 0;">تاريخ التصدير: ${new Date().toLocaleString(isAr ? 'ar-IQ' : 'en-US')}</p>
+                    </div>
+
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 24px;">
+                        <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px; padding: 12px;">
+                            <span style="font-size: 12px; color: #64748b; display: block; margin-bottom: 4px;">إجمالي المبيعات</span>
+                            <strong style="font-size: 18px; color: #059669;">${metrics.totalRevenue.toLocaleString()} ${t.currency}</strong>
+                        </div>
+                        <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px; padding: 12px;">
+                            <span style="font-size: 12px; color: #64748b; display: block; margin-bottom: 4px;">صافي الأرباح (35%)</span>
+                            <strong style="font-size: 18px; color: #d97706;">${metrics.netProfit.toLocaleString()} ${t.currency}</strong>
+                        </div>
+                        <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px; padding: 12px;">
+                            <span style="font-size: 12px; color: #64748b; display: block; margin-bottom: 4px;">إجمالي عدد الطلبات</span>
+                            <strong style="font-size: 18px; color: #0f172a;">${metrics.orderCount} ${t.orderWord}</strong>
+                        </div>
+                        <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px; padding: 12px;">
+                            <span style="font-size: 12px; color: #64748b; display: block; margin-bottom: 4px;">متوسط التقييم العام</span>
+                            <strong style="font-size: 18px; color: #d97706;">${metrics.avgRating} ⭐</strong>
+                        </div>
+                    </div>
+
+                    <div style="margin-top: 15px;">
+                        <h3 style="font-size: 15px; color: #0f172a; border-bottom: 2px solid #e2e8f0; padding-bottom: 6px; margin-bottom: 12px;">الأطباق الأكثر طلباً</h3>
+                        ${metrics.topDishes.length === 0 ? '<p style="font-size: 12px; color: #94a3b8;">لا توجد طلبات مكتملة لهذه الفترة.</p>' : `
+                        <table style="width: 100%; border-collapse: collapse; font-size: 12px;">
+                            <thead>
+                                <tr style="background: #f1f5f9; text-align: ${isAr ? 'right' : 'left'};">
+                                    <th style="padding: 10px; border: 1px solid #cbd5e1;">اسم الطبق</th>
+                                    <th style="padding: 10px; border: 1px solid #cbd5e1; width: 120px;">عدد الطلبات</th>
+                                    <th style="padding: 10px; border: 1px solid #cbd5e1; width: 90px;">التقييم</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${metrics.topDishes.map(dish => `
+                                    <tr>
+                                        <td style="padding: 8px 10px; border: 1px solid #cbd5e1;">${dish.nameAr}</td>
+                                        <td style="padding: 8px 10px; border: 1px solid #cbd5e1; font-weight: bold; color: #d97706;">${metrics.itemCounts[dish.id] || 0} ${t.orderWord}</td>
+                                        <td style="padding: 8px 10px; border: 1px solid #cbd5e1;">${getRatingDisplay(dish)} ⭐</td>
+                                    </tr>
+                                `).join('')}
+                            </tbody>
+                        </table>
+                        `}
+                    </div>
+
+                    <div style="margin-top: 35px; text-align: center; border-top: 1px solid #e2e8f0; padding-top: 12px; font-size: 10px; color: #94a3b8;">
+                        تقرير رسمي موثق مُولد من نظام خان الشرق الرقمي - جميع الحقوق محفوظة © ${new Date().getFullYear()}
+                    </div>
+                `;
+
+                if (window.html2pdf) {
+                    const opt = {
+                        margin:       10,
+                        filename:     filename,
+                        image:        { type: 'jpeg', quality: 0.98 },
+                        html2canvas:  { scale: 2, useCORS: true },
+                        jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
+                    };
+                    window.html2pdf().set(opt).from(element).save();
+                } else {
+                    // Fallback to iframe printing if CDN blocked
+                    const iframe = document.createElement('iframe');
+                    iframe.style.display = 'none';
+                    document.body.appendChild(iframe);
+                    const doc = iframe.contentWindow.document;
+                    doc.open();
+                    doc.write('<html><head><title>' + filename + '</title><link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&display=swap" rel="stylesheet"></head><body style="margin:0;">' + element.outerHTML + '</body></html>');
+                    doc.close();
+                    setTimeout(() => {
+                        iframe.contentWindow.focus();
+                        iframe.contentWindow.print();
+                        document.body.removeChild(iframe);
+                    }, 400);
+                }
+            };
+
+            const editingItem = typeof menuModal === 'number' ? menuItems.find(i => i.id === menuModal) : null;
+
+            const handleSaveNew = (data) => { addMenuItem(data); setMenuModal(null); };
+            const handleSaveEdit = (data) => { updateMenuItem(editingItem.id, data); setMenuModal(null); };
+            const handleDelete = (id) => { if (confirm('هل أنت متأكد من حذف هذا الطبق؟')) deleteMenuItem(id); };
+            const handleReset = () => { if (confirm('سيتم تصفير كل الطلبات والمبيعات والتقييمات. هل تريد المتابعة؟')) resetAllData(); };
+
+            return (
+                <div className="min-h-screen bg-slate-950 animate-fade-in pb-20">
+                    {/* Navigation Tabs */}
+                    <div className="flex overflow-x-auto hide-scrollbar p-4 gap-2 border-b border-slate-800 sticky top-[65px] bg-slate-950/80 backdrop-blur z-40">
+                        {[
+                            { id: 'dash', label: t.adminDash, icon: <Icons.Chart /> },
+                            { id: 'orders', label: t.adminOrders, icon: <Icons.Activity /> },
+                            { id: 'menu', label: t.adminMenu, icon: <Icons.List /> }
+                        ].map(tab => (
+                            <button key={tab.id} onClick={() => setAdminTab(tab.id)} className={`flex items-center gap-2 px-5 py-2.5 rounded-full text-sm font-bold whitespace-nowrap transition-all ${adminTab === tab.id ? 'bg-gold-600 text-slate-900' : 'bg-slate-900 text-slate-400 border border-slate-800'}`}>
+                                {tab.icon} {tab.label}
+                            </button>
+                        ))}
+                    </div>
+
+                    <div className="p-4">
+                        {/* Dashboard & Analytics Tab */}
+                        {adminTab === 'dash' && (
+                            <div className="space-y-6 animate-slide-up">
+                                {/* Sub View Selector */}
+                                <div className="grid grid-cols-2 gap-2 glass p-1 rounded-2xl border border-slate-800">
+                                    <button onClick={() => setReportView('daily')} className={`py-2.5 rounded-xl text-xs font-bold transition-all ${reportView === 'daily' ? 'bg-gold-600 text-slate-900 shadow-md' : 'text-slate-400 hover:text-white'}`}>
+                                        {t.dailySales}
+                                    </button>
+                                    <button onClick={() => setReportView('monthly')} className={`py-2.5 rounded-xl text-xs font-bold transition-all ${reportView === 'monthly' ? 'bg-gold-600 text-slate-900 shadow-md' : 'text-slate-400 hover:text-white'}`}>
+                                        {t.monthlySales}
+                                    </button>
+                                </div>
+
+                                {reportView === 'daily' ? (
+                                    /* Daily Analytics View */
+                                    <div className="space-y-4">
+                                        <div className="flex items-center justify-between glass p-3 rounded-2xl border border-slate-800">
+                                            <span className="text-xs text-slate-400 font-bold">{isAr ? 'اختر التاريخ:' : 'Select Date:'}</span>
+                                            <input type="date" value={selectedDateStr} onChange={e => setSelectedDateStr(e.target.value)} className="bg-slate-900 border border-slate-700 text-gold-400 text-xs rounded-xl px-3 py-1.5 outline-none" />
+                                        </div>
+
+                                        <div className="grid grid-cols-2 gap-4">
+                                            <div className="glass p-4 rounded-2xl border border-slate-800">
+                                                <p className="text-xs text-slate-400 mb-1">{t.dailySales}</p>
+                                                <p className="text-lg font-bold text-emerald-400">{dailyMetrics.totalRevenue.toLocaleString()} {t.currency}</p>
+                                            </div>
+                                            <div className="glass p-4 rounded-2xl border border-slate-800">
+                                                <p className="text-xs text-slate-400 mb-1">{t.netProfit}</p>
+                                                <p className="text-lg font-bold text-gold-400">{dailyMetrics.netProfit.toLocaleString()} {t.currency}</p>
+                                            </div>
+                                            <div className="glass p-4 rounded-2xl border border-slate-800">
+                                                <p className="text-xs text-slate-400 mb-1">{t.ordersCount}</p>
+                                                <p className="text-lg font-bold text-white">{dailyMetrics.orderCount} {t.orderWord}</p>
+                                            </div>
+                                            <div className="glass p-4 rounded-2xl border border-slate-800">
+                                                <p className="text-xs text-slate-400 mb-1">{t.avgRating}</p>
+                                                <p className="text-lg font-bold text-gold-400">{dailyMetrics.avgRating} ⭐</p>
+                                            </div>
+                                        </div>
+
+                                        <div className="glass p-5 rounded-2xl border border-slate-800">
+                                            <h3 className="font-bold text-white mb-4">{t.topDishes}</h3>
+                                            {dailyMetrics.orderCount === 0 ? (
+                                                <p className="text-sm text-slate-500">{t.noCompletedOrders}</p>
+                                            ) : (
+                                                <div className="space-y-4">
+                                                    {dailyMetrics.topDishes.map((item, idx) => {
+                                                        const count = dailyMetrics.itemCounts[item.id] || 0;
+                                                        return (
+                                                            <div key={item.id}>
+                                                                <div className="flex justify-between text-sm mb-1">
+                                                                    <span className="text-slate-300">{item.nameAr} <span className="text-xs text-slate-500">({count} {t.orderWord})</span></span>
+                                                                    <span className="text-gold-400 font-bold">{getRatingDisplay(item)} ⭐</span>
+                                                                </div>
+                                                                <div className="w-full bg-slate-800 rounded-full h-2">
+                                                                    <div className="bg-gradient-to-r from-gold-600 to-gold-400 h-2 rounded-full" style={{ width: `${Math.max(100 - (idx*20), 10)}%` }}></div>
+                                                                </div>
+                                                            </div>
+                                                        );
+                                                    })}
+                                                </div>
+                                            )}
+                                        </div>
+
+                                        <button onClick={() => exportPdf('daily')} className="w-full py-3.5 bg-gradient-to-r from-emerald-600 to-emerald-500 text-slate-950 rounded-xl font-bold flex items-center justify-center gap-2 shadow-lg shadow-emerald-600/20 active:scale-95 transition-transform">
+                                            <Icons.Download /> {t.downloadDailyPdf}
+                                        </button>
+                                    </div>
+                                ) : (
+                                    /* Monthly Analytics View */
+                                    <div className="space-y-4">
+                                        <div className="grid grid-cols-2 gap-4">
+                                            <div className="glass p-4 rounded-2xl border border-slate-800">
+                                                <p className="text-xs text-slate-400 mb-1">{t.monthlySales}</p>
+                                                <p className="text-lg font-bold text-emerald-400">{monthlyMetrics.totalRevenue.toLocaleString()} {t.currency}</p>
+                                            </div>
+                                            <div className="glass p-4 rounded-2xl border border-slate-800">
+                                                <p className="text-xs text-slate-400 mb-1">{t.netProfit}</p>
+                                                <p className="text-lg font-bold text-gold-400">{monthlyMetrics.netProfit.toLocaleString()} {t.currency}</p>
+                                            </div>
+                                            <div className="glass p-4 rounded-2xl border border-slate-800">
+                                                <p className="text-xs text-slate-400 mb-1">{t.ordersCount}</p>
+                                                <p className="text-lg font-bold text-white">{monthlyMetrics.orderCount} {t.orderWord}</p>
+                                            </div>
+                                            <div className="glass p-4 rounded-2xl border border-slate-800">
+                                                <p className="text-xs text-slate-400 mb-1">{t.avgRating}</p>
+                                                <p className="text-lg font-bold text-gold-400">{monthlyMetrics.avgRating} ⭐</p>
+                                            </div>
+                                        </div>
+
+                                        <div className="glass p-5 rounded-2xl border border-slate-800">
+                                            <h3 className="font-bold text-white mb-4">{t.topDishes}</h3>
+                                            {monthlyMetrics.orderCount === 0 ? (
+                                                <p className="text-sm text-slate-500">{t.noCompletedOrders}</p>
+                                            ) : (
+                                                <div className="space-y-4">
+                                                    {monthlyMetrics.topDishes.map((item, idx) => {
+                                                        const count = monthlyMetrics.itemCounts[item.id] || 0;
+                                                        return (
+                                                            <div key={item.id}>
+                                                                <div className="flex justify-between text-sm mb-1">
+                                                                    <span className="text-slate-300">{item.nameAr} <span className="text-xs text-slate-500">({count} {t.orderWord})</span></span>
+                                                                    <span className="text-gold-400 font-bold">{getRatingDisplay(item)} ⭐</span>
+                                                                </div>
+                                                                <div className="w-full bg-slate-800 rounded-full h-2">
+                                                                    <div className="bg-gradient-to-r from-gold-600 to-gold-400 h-2 rounded-full" style={{ width: `${Math.max(100 - (idx*20), 10)}%` }}></div>
+                                                                </div>
+                                                            </div>
+                                                        );
+                                                    })}
+                                                </div>
+                                            )}
+                                        </div>
+
+                                        <button onClick={() => exportPdf('monthly')} className="w-full py-3.5 bg-gradient-to-r from-gold-600 to-gold-500 text-slate-950 rounded-xl font-bold flex items-center justify-center gap-2 shadow-lg shadow-gold-600/20 active:scale-95 transition-transform">
+                                            <Icons.Download /> {t.downloadMonthlyPdf}
+                                        </button>
+                                    </div>
+                                )}
+
+                                <button onClick={handleReset} className="w-full py-3 glass border border-slate-700 text-slate-300 rounded-xl font-bold flex items-center justify-center gap-2 hover:border-red-500 hover:text-red-400 transition-all">
+                                    <Icons.Reset /> {t.resetData}
+                                </button>
+                            </div>
+                        )}
+
+                        {/* Live Orders Tab */}
+                        {adminTab === 'orders' && (
+                            <div className="space-y-4 animate-slide-up">
+                                {orders.length === 0 ? <p className="text-center text-slate-500 mt-10">{t.noOrders}</p> :
+                                orders.map(order => {
+                                    const elapsedMin = Math.floor((Date.now() - new Date(order.date).getTime()) / 60000);
+                                    const adminStatuses = order.type === 'delivery'
+                                        ? ['pending', 'preparing', 'delivering', 'completed']
+                                        : ['pending', 'preparing', 'completed'];
+
+                                    return (
+                                    <div key={order.id} className="glass p-5 rounded-2xl border border-slate-700">
+                                        <div className="flex justify-between items-center mb-3 border-b border-slate-800 pb-3">
+                                            <div>
+                                                <h3 className="font-bold text-gold-400 text-lg">{order.id}</h3>
+                                                <p className="text-xs text-slate-400">{order.type === 'dineIn' ? `${t.table}: ${order.details.table}` : `${t.deliveryTo}: ${order.details.name}`}</p>
+                                                {order.status !== 'completed' && <p className="text-[10px] text-slate-500 mt-1">{elapsedMin} {t.minutesElapsed}</p>}
+                                            </div>
+                                            <span className="text-lg font-bold text-white">{order.totals.total.toLocaleString()} {t.currency}</span>
+                                        </div>
+                                        <div className="flex gap-2 mt-4 overflow-x-auto hide-scrollbar">
+                                            {adminStatuses.map(status => (
+                                                <button key={status} onClick={() => updateOrderStatus(order.id, status)} className={`px-4 py-2 rounded-lg text-xs font-bold whitespace-nowrap transition-all ${order.status === status ? 'bg-gold-600 text-slate-900' : 'bg-slate-800 text-slate-400 hover:bg-slate-700'}`}>
+                                                    {t[`status_${status}`]}
+                                                </button>
+                                            ))}
+                                        </div>
+                                    </div>
+                                    );
+                                })}
+                            </div>
+                        )}
+
+                        {/* Menu CRUD Tab */}
+                        {adminTab === 'menu' && (
+                            <div className="space-y-4 animate-slide-up">
+                                <button onClick={() => setMenuModal('new')} className="w-full py-3 bg-gradient-to-r from-gold-600 to-gold-500 text-slate-900 rounded-xl font-bold flex items-center justify-center gap-2 shadow-lg shadow-gold-600/30 active:scale-95 transition-transform">
+                                    <Icons.Plus /> {t.addNewDish}
+                                </button>
+                                {menuItems.map(item => (
+                                    <div key={item.id} className="glass p-4 rounded-2xl border border-slate-700">
+                                        <div className="flex items-center justify-between gap-3">
+                                            <div className="flex items-center gap-3 flex-1 min-w-0">
+                                                <img src={item.img} className="w-14 h-14 rounded-lg object-cover flex-shrink-0" />
+                                                <div className="min-w-0">
+                                                    <h4 className="font-bold text-white text-sm truncate">{item.nameAr}</h4>
+                                                    <p className="text-xs text-gold-400">
+                                                        {getEffectivePrice(item).toLocaleString()} {t.currency}
+                                                        {item.discount > 0 && <span className="text-slate-500 line-through mx-1">{item.price.toLocaleString()}</span>}
+                                                        {' '}| {getRatingDisplay(item)} ⭐ ({item.reviews})
+                                                    </p>
+                                                    <p className="text-[10px] text-slate-500">{isAr ? CATEGORIES.find(c => c.id === item.cat)?.labelAr : CATEGORIES.find(c => c.id === item.cat)?.labelEn}</p>
+                                                </div>
+                                            </div>
+                                            <div className="flex flex-col gap-2 items-end flex-shrink-0">
+                                                <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${item.available ? 'bg-emerald-500/20 text-emerald-400' : 'bg-red-500/20 text-red-400'}`}>{item.available ? t.available : t.unavailable}</span>
+                                                <div className="flex gap-2">
+                                                    <button onClick={() => toggleItemAvailability(item.id)} className="w-8 h-8 rounded-lg bg-slate-800 text-slate-300 flex items-center justify-center hover:bg-slate-700"><Icons.Check /></button>
+                                                    <button onClick={() => setMenuModal(item.id)} className="w-8 h-8 rounded-lg bg-slate-800 text-gold-400 flex items-center justify-center hover:bg-slate-700"><Icons.Edit /></button>
+                                                    <button onClick={() => handleDelete(item.id)} className="w-8 h-8 rounded-lg bg-slate-800 text-red-400 flex items-center justify-center hover:bg-slate-700"><Icons.Trash /></button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        )}
+                    </div>
+
+                    {menuModal === 'new' && (
+                        <MenuItemForm onCancel={() => setMenuModal(null)} onSave={handleSaveNew} />
+                    )}
+                    {editingItem && (
+                        <MenuItemForm
+                            initial={{
+                                nameAr: editingItem.nameAr,
+                                descAr: editingItem.descAr,
+                                price: editingItem.price, discount: editingItem.discount,
+                                cat: editingItem.cat, img: editingItem.img, available: editingItem.available
+                            }}
+                            onCancel={() => setMenuModal(null)}
+                            onSave={handleSaveEdit}
+                        />
+                    )}
+                </div>
+            );
+        };
+
+        // ==========================================
+        // 8. Main App Wrapper
+        // ==========================================
+        const MainApp = () => {
+            const { appMode } = useContext(AppContext);
+            return (
+                <div className="min-h-screen max-w-md mx-auto bg-slate-900 shadow-2xl relative overflow-hidden">
+                    <Navbar />
+                    {appMode === 'customer' ? <CustomerApp /> : <AdminApp />}
+                    <AdminPinModal />
+                </div>
+            );
+        };
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<AppProvider><MainApp /></AppProvider>);
+    </script>
+</body>
+  </html>
