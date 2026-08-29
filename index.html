@@ -1439,7 +1439,7 @@
         const MainApp = () => {
             const { appMode } = useContext(AppContext);
             return (
-                <div className="min-h-screen max-w-md mx-auto bg-slate-900 shadow-2xl relative overflow-hidden">
+                <div className="min-h-screen w-full max-w-7xl mx-auto bg-slate-900 shadow-2xl relative overflow-hidden">
                     <Navbar />
                     {appMode === 'customer' ? <CustomerApp /> : <AdminApp />}
                     <AdminPinModal />
