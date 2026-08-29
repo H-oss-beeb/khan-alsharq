@@ -647,7 +647,7 @@
             const [hoverRating, setHoverRating] = useState(0);
             const [activeCat, setActiveCat] = useState('all');
 
-            const ratingLabelsAr = { 1: 'لم يعجبني 🌟', 2: 'سيء 🌟🌟', 3: 'ليس سيئاً 🌟🌟🌟', 4: 'جيد جداً 🌟🌟🌟🌟', 5: 'ممتاز 🌟🌟🌟🌟🌟' };
+            const ratingLabelsAr = { 1: 'سيء 🌟', 2: 'لم يعجبني 🌟🌟', 3: 'ليس سيئاً 🌟🌟🌟', 4: 'جيد جداً 🌟🌟🌟🌟', 5: 'ممتاز 🌟🌟🌟🌟🌟' };
             const ratingLabelsEn = { 1: 'Did not like it 🌟', 2: 'Bad 🌟🌟', 3: 'Not bad 🌟🌟🌟', 4: 'Very good 🌟🌟🌟🌟', 5: 'Excellent 🌟🌟🌟🌟🌟' };
 
             const handleRate = () => {
@@ -660,7 +660,7 @@
             const visibleItems = menuItems.filter(i => i.available && (activeCat === 'all' || i.cat === activeCat));
 
             return (
-                <div className="p-4 animate-slide-up space-y-6">
+                <div className="p-4 space-y-6">
                     <div className="flex overflow-x-auto hide-scrollbar gap-2 -mx-1 px-1">
                         <button onClick={() => setActiveCat('all')} className={`px-4 py-2 rounded-full text-xs font-bold whitespace-nowrap border transition-all ${activeCat === 'all' ? 'bg-gold-600 text-slate-900 border-gold-600' : 'bg-slate-900 text-slate-400 border-slate-700'}`}>{t.all}</button>
                         {CATEGORIES.map(c => (
@@ -714,18 +714,19 @@
 
                     {/* Enhanced Star Rating Modal */}
                     {ratingModal && (
-                        <div className="fixed inset-0 bg-black/80 z-[100] flex items-center justify-center p-4 animate-fade-in h-[100dvh] w-screen">
-                            <div className="glass border border-slate-600 p-6 rounded-3xl w-full max-w-sm text-center">
-                                <h3 className="text-xl font-bold text-white mb-4">{t.rateDish}</h3>
-                                <div className="flex justify-center gap-2 mb-3">
-                                    {[1,2,3,4,5].map(star => (
-                                        <div 
-                                            key={star} 
-                                            onClick={() => setTempRating(star)} 
-                                            onMouseEnter={() => setHoverRating(star)}
-                                            onMouseLeave={() => setHoverRating(0)}
-                                            className="cursor-pointer transform hover:scale-125 transition-transform"
-                                        >
+                        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 backdrop-blur-sm p-4">
+                  <div className="glass border border-slate-600 p-6 rounded-3xl w-full max-w-sm text-center">
+                  <h3 className="text-xl font-bold text-white mb-4">{t.rateDish}</h3>
+                  <div className="flex justify-center gap-2 mb-3">
+                  {[1,2,3,4,5].map(star => (
+                        <div 
+                    key={star} 
+                    onClick={() => setTempRating(star)} 
+                    onMouseEnter={() => setHoverRating(star)}
+                    onMouseLeave={() => setHoverRating(0)}
+                    className="cursor-pointer transform hover:scale-125 transition-transform"
+                >
+
                                             <Icons.Star filled={star <= (hoverRating || tempRating)} />
                                         </div>
                                     ))}
