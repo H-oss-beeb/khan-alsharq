@@ -350,18 +350,25 @@
                 };
 
                 setOrders([newOrder, ...orders]);
-                        if (customerDetails.email) {
-            fetch('/api/send-email', {
+                                if (customerDetails.email) {
+            fetch('https://api.emailjs.com/api/v1.0/email/send', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers: {
+                    'Content-Type': 'application/json',
+                },
                 body: JSON.stringify({
-                    email: customerDetails.email,
-                    orderId: newOrder.id,
-                    total: total,
-                    items: cart
+                    service_id: 'service_medic3n',
+                    template_id: 'template_a07iq1v',
+                    user_id: 'Shb3uU9ENpmsz-j2s',
+                    template_params: {
+                        to_email: customerDetails.email,
+                        order_id: newOrder.id,
+                        total_price: total
+                    }
                 })
             }).catch(err => console.error("Email send failed:", err));
         }
+
 
                 setCart([]);
                 setActivePromo(null);
