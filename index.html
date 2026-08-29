@@ -583,7 +583,7 @@
                     {customerView === 'track' && <CustomerTrack />}
 
                     {/* Bottom Navigation */}
-                    <div className="fixed bottom-0 w-full glass border-t border-slate-700/50 flex justify-around items-center py-3 px-6 z-40">
+                    <div className="fixed bottom-0 sm:bottom-4 left-0 right-0 w-full sm:max-w-md sm:mx-auto glass border-t sm:border border-slate-700/50 flex justify-around items-center py-3 px-6 z-40 sm:rounded-full shadow-2xl">
                         <NavBtn icon={<Icons.Store />} label={t.home} active={customerView === 'home'} onClick={() => setCustomerView('home')} />
                         <NavBtn icon={<Icons.List />} label={t.menu} active={customerView === 'menu'} onClick={() => setCustomerView('menu')} />
                         <div className="relative">
@@ -660,7 +660,7 @@
             const visibleItems = menuItems.filter(i => i.available && (activeCat === 'all' || i.cat === activeCat));
 
             return (
-                <div className="p-4 space-y-6">
+                <div className="max-w-6xl mx-auto px-4 py-6 space-y-8">
                     <div className="flex overflow-x-auto hide-scrollbar gap-2 -mx-1 px-1">
                         <button onClick={() => setActiveCat('all')} className={`px-4 py-2 rounded-full text-xs font-bold whitespace-nowrap border transition-all ${activeCat === 'all' ? 'bg-gold-600 text-slate-900 border-gold-600' : 'bg-slate-900 text-slate-400 border-slate-700'}`}>{t.all}</button>
                         {CATEGORIES.map(c => (
@@ -673,7 +673,7 @@
                     {visibleItems.length === 0 && (
                         <p className="text-center text-slate-500 mt-10">{t.noDishes}</p>
                     )}
-
+                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                     {visibleItems.map(item => {
                         const effectivePrice = getEffectivePrice(item);
                         const hasDiscount = item.discount > 0;
@@ -711,6 +711,7 @@
                         </div>
                         );
                     })}
+                     </div>
 
                     {/* Enhanced Star Rating Modal */}
                     {ratingModal && (
